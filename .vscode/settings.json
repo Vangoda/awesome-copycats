@@ -1,0 +1,22 @@
+{
+  "Lua.diagnostics.globals": [
+    "awesome",
+    "client",
+    "screen",
+    "root",
+    "globalkeys",
+    "tag",
+    "scrlocker",
+    "mpd_now",
+    "widget",
+    "modkey",
+    "mem_now",
+    "cpu_now",
+    "coretemp_now",
+    "bat_now",
+    "bat_notification_critical_preset",
+    "bat_notification_low_preset",
+    "bat_notification_charged_preset"
+  ],
+  "chat.disableAIFeatures": true
+}
