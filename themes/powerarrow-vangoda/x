@@ -1,0 +1,36 @@
+! Powerarrow Vangoda
+
+*.background: #e0ece9
+*.foreground: #323633
+
+!black
+*color0: #323633
+*color8: #9a9998
+
+!red
+*color1: #cd3e2a
+*color9: #fed0c8
+
+!green
+*color2: #6ca400
+*color10: #e3f8bc
+
+!yellow
+*color3: #bfac02
+*color11: #fdf7bd
+
+!blue
+*color4: #326dce
+*color12: #cbdcfc
+
+!magenta
+*color5: #c52bca
+*color13: #f5ccfd
+
+!cyan
+*color6: #10af80
+*color14: #c1f9e8
+
+!white
+*color7: #e0ece9
+*color15: #ebfffa
