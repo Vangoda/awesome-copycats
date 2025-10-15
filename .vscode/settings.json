@@ -16,7 +16,8 @@
     "bat_now",
     "bat_notification_critical_preset",
     "bat_notification_low_preset",
-    "bat_notification_charged_preset"
+    "bat_notification_charged_preset",
+    "fs_now"
   ],
   "chat.disableAIFeatures": true
 }
