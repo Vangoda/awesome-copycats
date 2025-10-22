@@ -4,13 +4,14 @@
     github.com/lcpz
     Edited by Vangoda
 
---]] local gears = require("gears")
+--]]
+local gears = require("gears")
 local lain = require("lain")
 local awful = require("awful")
 local wibox = require("wibox")
 local xresources = require("beautiful.xresources")
 local dpi = xresources.apply_dpi
-local helpers = require("lain.helpers")
+local cairo = require("lgi").cairo
 
 local string, os = string, os
 local my_table = awful.util.table or gears.table -- 4.{0,1} compatibility
@@ -23,7 +24,7 @@ local theme = {}
 theme.dir = os.getenv("HOME") .. "/.config/awesome/themes/powerarrow-vangoda"
 
 -- Wallpaper
-theme.wallpaper = theme.dir .. "/wall.png"
+theme.wallpaper = theme.dir .. "/wallpapers/jungle-croc.png"
 
 -- Fonts
 theme.font = "Terminus Bold " .. dpi(16)
@@ -152,7 +153,7 @@ local textclock = wibox.widget.textclock(format_clock, 1, "Europe/Zagreb")
 -- Calendar
 theme.cal = lain.widget.cal({
     -- cal = "cal --color=always",
-    attach_to = {textclock},
+    attach_to = { textclock },
     three = true,
     followtag = true,
     icons = theme.dir .. "/icons/cal_green/",
@@ -165,7 +166,7 @@ theme.cal = lain.widget.cal({
 
 -- Taskwarrior
 -- This is a task list app widget. It requires taskwarrior app.
--- It uses the task widget from lain to show notifications and run task 
+-- It uses the task widget from lain to show notifications and run task
 -- commands from the promptbox
 local task = wibox.widget.imagebox(theme.widget_task)
 local task_notification_preset = {
@@ -184,29 +185,6 @@ lain.widget.contrib.task.attach(task, {
 })
 task:buttons(my_table.join(awful.button({}, 1, lain.widget.contrib.task.prompt)))
 
--- Mail IMAP check
--- commented because it needs to be set before use
-local mailicon = wibox.widget.imagebox(theme.widget_mail)
-mailicon:buttons(my_table.join(awful.button({}, 1, function()
-    awful.spawn(mail)
-end)))
-theme.mail = lain.widget.imap({
-    timeout = 180,
-    server = "server",
-    mail = "mail",
-    password = "keyring get mail",
-    settings = function()
-        if mailcount > 0 then
-            widget:set_text(" " .. mailcount .. " ")
-            mailicon:set_image(theme.widget_mail_on)
-        else
-            widget:set_text("")
-            mailicon:set_image(theme.widget_mail)
-        end
-    end
-})
---
-
 -- ALSA volume
 theme.volume = lain.widget.alsabar({
     -- togglechannel = "IEC958,3",
@@ -219,7 +197,7 @@ theme.volume = lain.widget.alsabar({
 -- MPD
 local musicplr = awful.util.terminal .. " -title Music -g 130x34-320+16 -e ncmpcpp"
 local mpdicon = wibox.widget.imagebox(theme.widget_music)
-mpdicon:buttons(my_table.join(awful.button({modkey}, 1, function()
+mpdicon:buttons(my_table.join(awful.button({ modkey }, 1, function()
     awful.spawn.with_shell(musicplr)
 end), awful.button({}, 1, function()
     os.execute("mpc prev")
@@ -252,8 +230,20 @@ theme.mpd = lain.widget.mpd({
 local memicon = wibox.widget.imagebox(theme.widget_mem)
 local mem = lain.widget.mem({
     settings = function()
-        widget:set_markup(markup.fontfg(theme.font_calendar, theme.magenta_light,
+        widget:set_markup(markup.fontfg(theme.font_calendar, theme.red_light,
             mem_now.used .. "/32768 MB (" .. mem_now.perc .. "%)"))
+    end
+})
+
+-- Net
+local neticon = wibox.widget.imagebox(theme.widget_net)
+local net = lain.widget.net({
+    timeout = 1,
+    units = 1048576,
+    format = "%04.1f",
+    settings = function()
+        widget:set_markup(markup.fontfg(theme.font_calendar, theme.yellow_light,
+            " " .. net_now.received .. "↓" .. net_now.sent .. "↑MB/s"))
     end
 })
 
@@ -266,7 +256,7 @@ local cpu = lain.widget.cpu({
 })
 
 -- Coretemp (lm_sensors, per core)
-local tempwidget = awful.widget.watch({awful.util.shell, '-c', 'sensors -n k10temp-pci-00c3 | grep Tccd1'}, 1,
+local tempwidget = awful.widget.watch({ awful.util.shell, '-c', 'sensors -n k10temp-pci-00c3 | grep Tccd1' }, 1,
     function(widget, stdout)
         local temps = ""
         for line in stdout:gmatch("[^\r\n]+") do
@@ -308,56 +298,59 @@ theme.fs = lain.widget.fs({
         widget:set_markup(markup.fontfg(theme.font_calendar, theme.blue_light, fsp))
     end
 })
---
-
--- Battery
--- local baticon = wibox.widget.imagebox(theme.widget_battery)
--- local bat = lain.widget.bat({
---     settings = function()
---         if bat_now.status and bat_now.status ~= "N/A" then
---             if bat_now.ac_status == 1 then
---                 widget:set_markup(markup.font(theme.font, " AC "))
---                 baticon:set_image(theme.widget_ac)
---                 return
---             elseif not bat_now.perc and tonumber(bat_now.perc) <= 5 then
---                 baticon:set_image(theme.widget_battery_empty)
---             elseif not bat_now.perc and tonumber(bat_now.perc) <= 15 then
---                 baticon:set_image(theme.widget_battery_low)
---             else
---                 baticon:set_image(theme.widget_battery)
---             end
---             widget:set_markup(markup.font(theme.font, " " .. bat_now.perc .. "% "))
---         else
---             widget:set_markup()
---             baticon:set_image(theme.widget_ac)
---         end
---     end
--- })
-
--- Net
-local neticon = wibox.widget.imagebox(theme.widget_net)
-local net = lain.widget.net({
-    timeout = 1,
-    units = 1048576,
-    format = "%04.1f",
-    settings = function()
-        widget:set_markup(markup.fontfg(theme.font_calendar, theme.yellow_light,
-            " " .. net_now.received .. "↓" .. net_now.sent .. "↑MB/s"))
-    end
-})
-
--- Brigtness
-local brighticon = wibox.widget.imagebox(theme.widget_brightness)
--- If you use xbacklight, comment the line with "light -G" and uncomment the line bellow
--- local brightwidget = awful.widget.watch('xbacklight -get', 0.1,
-local brightwidget = awful.widget.watch('light -G', 0.1, function(widget, stdout, stderr, exitreason, exitcode)
-    local brightness_level = tonumber(string.format("%.0f", stdout))
-    widget:set_markup(markup.font(theme.font, " " .. brightness_level .. "%"))
-end)
 
 -- Separators
 local arrow = separators.arrow_left
 
+-- Virtual monitor screen
+local virtual_screen = {
+    width = 0,
+    height = 0
+}
+
+-- Funtions
+
+-- Draw Cairo wallpaper over virtual screen (stretch over all monitors)
+function theme.cairo_wallpaper()
+    -- Calculate full width and max height
+    for s in screen do
+        virtual_screen.width = virtual_screen.width
+            + s.geometry.width
+        if s.geometry.height > virtual_screen.height then
+            virtual_screen.height = s.geometry.height
+        end
+    end
+
+    -- Create cairo surface to draw on to
+    local surface = cairo.ImageSurface(cairo.Format.ARGB32, virtual_screen.width, virtual_screen.height)
+    local context = cairo.Context(surface)
+    -- Load the wallpaper image
+    local img_surface = cairo.ImageSurface.create_from_png(theme.wallpaper)
+    if not img_surface then
+        print("Error loading wallpaper image: " .. theme.wallpaper)
+        return
+    end
+    -- Create pattern
+    local pattern = cairo.Pattern.create_for_surface(img_surface)
+    -- Calculate scale for the wallpaper to fill the total area
+    -- Something is broken I just used images in right res
+    -- local sx = virtual_screen.width / img_surface:get_width()
+    -- local sy = virtual_screen.height / img_surface:get_height()
+
+    -- local matrix = cairo.Matrix()
+    -- matrix:scale(1 / sx, 1 / sy) -- scale pattern to stretch the image
+    -- pattern:set_matrix(matrix)
+
+    -- Paint the stretched wallpaper across the entire combined monitor area
+    context:set_source(pattern)
+    -- context:set_source_rgb(1, 0, 0)
+    context:paint()
+
+    -- Set the wallpaper with the created surface for all screens together
+    gears.wallpaper.set(surface)
+end
+
+-- Draw powerline arrow
 function theme.powerline_rl(cr, width, height)
     local arrow_depth, offset = height / 2, 0
 
@@ -377,24 +370,28 @@ function theme.powerline_rl(cr, width, height)
     cr:close_path()
 end
 
+-- Runs once for each screen at awesomewm start via screen.at_screen_connect()
 function theme.at_screen_connect(s)
+    -- Runs once for each screen
     -- Quake application
     s.quake = lain.util.quake({
         app = awful.util.terminal
     })
 
     -- If wallpaper is a function, call it with the screen
-    local wallpaper = theme.wallpaper
-    if type(wallpaper) == "function" then
-        wallpaper = wallpaper(s)
-    end
-    gears.wallpaper.maximized(wallpaper, s, true)
+    -- local wallpaper = theme.wallpaper
+    -- if type(wallpaper) == "function" then
+    --     wallpaper = wallpaper(s)
+    -- end
+    -- gears.wallpaper.maximized(wallpaper, s, true)
+    theme.cairo_wallpaper()
 
     -- Tags
     awful.tag(awful.util.tagnames, s, awful.layout.layouts[1])
 
     -- Create a promptbox for each screen
     s.mypromptbox = awful.widget.prompt()
+
     -- Create an imagebox widget which will contains an icon indicating which layout we're using.
     -- We need one layoutbox per screen.
     s.mylayoutbox = awful.widget.layoutbox(s)
@@ -409,6 +406,7 @@ function theme.at_screen_connect(s)
     end), awful.button({}, 5, function()
         awful.layout.inc(-1)
     end)))
+
     -- Create a taglist widget
     s.mytaglist = awful.widget.taglist(s, awful.widget.taglist.filter.all, awful.util.taglist_buttons)
 
@@ -425,7 +423,7 @@ function theme.at_screen_connect(s)
     })
 
     -- Add widgets to the wibox
-    s.mywibox:setup{
+    s.mywibox:setup {
         layout = wibox.layout.align.horizontal,
         { -- Left widgets
             layout = wibox.layout.fixed.horizontal,
@@ -434,30 +432,16 @@ function theme.at_screen_connect(s)
             s.mypromptbox,
             spr
         },
-        s.mytasklist, -- Middle widget
+        -- Middle widget
+        s.mytasklist,
         { -- Right widgets
             -- using separators
             layout = wibox.layout.fixed.horizontal,
+
             wibox.widget.systray(),
 
-            -- E-Mail
-            arrow(theme.bg_normal, theme.fg_focus),
-            wibox.container.background(wibox.container.margin(wibox.widget {
-                mailicon,
-                theme.mail and theme.mail.widget,
-                layout = wibox.layout.align.horizontal
-            }, dpi(3), dpi(3)), "#343434"),
-
-            -- Memory
-            arrow(theme.cyan, theme.magenta),
-            wibox.container.background(wibox.container.margin(wibox.widget {
-                memicon,
-                mem.widget,
-                layout = wibox.layout.align.horizontal
-            }, dpi(3), dpi(3)), theme.magenta),
-
-            -- CPU Usage & Temperature
-            arrow(theme.magenta, theme.red),
+            -- CPU Usage & Temperature + Memory
+            arrow("alpha", theme.red),
             wibox.container.background(wibox.container.margin(wibox.widget {
                 cpuicon,
                 cpu.widget,
@@ -468,6 +452,12 @@ function theme.at_screen_connect(s)
                 tempwidget,
                 layout = wibox.layout.align.horizontal
             }, dpi(3), dpi(3)), theme.red),
+            -- Memory
+            wibox.container.background(wibox.container.margin(wibox.widget {
+                memicon,
+                mem.widget,
+                layout = wibox.layout.align.horizontal
+            }, dpi(3), dpi(3)), theme.red),
 
             -- Filesystem
             arrow(theme.red, theme.blue),
@@ -476,14 +466,6 @@ function theme.at_screen_connect(s)
                 theme.fs and theme.fs.widget,
                 layout = wibox.layout.align.horizontal
             }, dpi(3), dpi(3)), theme.blue),
-
-            -- Power
-            -- arrow("#CB755B", "#8DAA9A"),
-            -- wibox.container.background(wibox.container.margin(wibox.widget {
-            --     baticon,
-            --     bat.widget,
-            --     layout = wibox.layout.align.horizontal
-            -- }, dpi(3), dpi(3)), "#8DAA9A"),
 
             -- Network stats
             arrow(theme.blue, theme.yellow),
@@ -502,7 +484,15 @@ function theme.at_screen_connect(s)
                 textclock,
                 layout = wibox.layout.align.horizontal
             }, dpi(3), dpi(3)), theme.green),
-            arrow(theme.green, theme.cyan),
+            arrow(theme.green, theme.magenta),
+
+            -- E-Mail
+            wibox.container.background(wibox.container.margin(wibox.widget {
+                mailicon,
+                theme.mail and theme.mail.widget,
+                layout = wibox.layout.align.horizontal
+            }, dpi(3), dpi(3)), theme.magenta),
+            arrow(theme.magenta, theme.cyan),
 
             -- Taskwarrior
             wibox.container.background(wibox.container.margin(task, dpi(3), dpi(7)), theme.cyan),
